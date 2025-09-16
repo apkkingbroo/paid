@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Goagame — Fixed Premium UI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ---------------------------
+   Basic reset & layout
+   --------------------------- */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#07101a;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;color:#e6edf3;overflow:hidden}
+iframe#mainFrame{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:0;opacity:0.98}
+
+/* FAB */
+.fab{
+  position:fixed;right:18px;bottom:18px;width:56px;height:56px;border-radius:50%;
+  background:#ffd54a;color:#081018;font-size:26px;font-weight:900;display:flex;
+  align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(0,0,0,.5);
+  z-index:1200;cursor:pointer;border:3px solid rgba(0,0,0,.35);user-select:none;
+}
+
+/* overlay base */
+.overlay{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);z-index:1100;padding:12px}
+
+/* dialog base */
+.dialog{width:100%;max-width:460px;border-radius:18px;background:linear-gradient(180deg,#071121,#07101a);color:var(--text,#e6edf3);box-shadow:0 30px 80px rgba(0,0,0,.7);padding-bottom:18px;position:relative;overflow:hidden}
+.dialog-head{font-weight:900;font-size:15px;padding:12px;text-align:center;background:linear-gradient(90deg,#68429b,#a569ff);color:#fff;border-radius:10px;margin:12px}
+
+/* top close */
+.top-cancel{position:absolute;right:12px;top:10px;background:transparent;border:none;color:#fff;font-size:18px;cursor:pointer}
+
+/* period + timer */
+.period{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-size:13px;color:#cbd5e1}
+.timer{font-weight:900;color:#ffd54a}
+
+/* result box */
+.result{margin:12px;border-radius:12px;padding:18px;min-height:76px;text-align:center;font-size:22px;font-weight:900;display:flex;align-items:center;justify-content:center;transition:all .22s}
+.result.big{background:linear-gradient(135deg,#ff7043,#ff8a65);color:#fff}
+.result.small{background:linear-gradient(135deg,#00c48c,#66d7a6);color:#fff}
+.result.pred{background:linear-gradient(135deg,#33363b,#1f2937);color:#fef3c7;font-style:italic}
+
+/* stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.stat{background:rgba(255,255,255,.02);border-radius:10px;padding:10px;text-align:center}
+.stat .label{font-size:11px;color:#cbd5e1}
+.stat .val{margin-top:6px;font-weight:900;font-size:14px}
+
+/* toggle */
+.toggle-box{margin:12px;background:rgba(255,255,255,.02);padding:10px;border-radius:10px;display:flex;justify-content:space-between;align-items:center}
+.toggle{width:46px;height:24px;border-radius:999px;background:#151622;position:relative;padding:4px;cursor:pointer}
+.knob{width:16px;height:16px;border-radius:50%;background:#ffd54a;position:absolute;left:4px;top:4px;transition:all .2s}
+.toggle.on{background:#0fb26b}
+.toggle.on .knob{left:26px;background:#fff}
+
+/* actions small buttons */
+.actions{display:flex;gap:10px;padding:12px}
+.btn{flex:1;padding:8px;border-radius:10px;font-weight:800;cursor:pointer;border:2px solid #000;font-size:13px;display:inline-flex;align-items:center;justify-content:center}
+.watch{background:#d32f2f;color:#fff}
+.openpaid{background:#ffd54a;color:#081018}
+
+/* winner line (inside main dialog) */
+.winline{margin:8px 12px;padding:10px;border-radius:10px;background:rgba(255,255,255,.02);font-weight:800;color:#d1fae5;text-align:center;}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:82px;transform:translateX(-50%) translateY(12px);background:#ffd54a;color:#081018;padding:8px 14px;border-radius:8px;font-weight:800;box-shadow:0 8px 30px rgba(0,0,0,.35);opacity:0;transition:all .2s;z-index:1400}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Premium panel - minimal & attractive (no online/winner) */
+.premium-dialog{width:100%;max-width:520px;border-radius:20px;background:linear-gradient(180deg,#0b0710,#120718);box-shadow:0 30px 100px rgba(0,0,0,.9);color:#fff;padding-bottom:18px;border:1px solid rgba(255,255,255,0.02)}
+.premium-head{padding:14px;text-align:center;font-weight:900;font-size:16px;background:linear-gradient(90deg,#8b5cf6,#f59e0b);color:#091018;border-radius:12px;margin:12px}
+.premium-card{margin:12px;padding:18px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+.premium-result{padding:22px;border-radius:12px;text-align:center;font-weight:900;margin-top:6px;font-size:24px}
+.premium-result.big{background:linear-gradient(135deg,#ffd54a,#ffb86b);color:#081018}
+.premium-result.small{background:linear-gradient(135deg,#c07cff,#8b5cf6);color:#fff}
+
+/* premium features list minimal look */
+.premium-features{margin-top:12px;padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);font-size:14px;line-height:1.4;color:#e6e7eb}
+
+/* hide premium button */
+.hidePremium{display:block;margin:12px auto 20px auto;padding:8px 14px;border-radius:999px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff;font-weight:800;cursor:pointer}
+
+/* responsive */
+@media (max-width:440px){
+  .dialog{max-width:360px}
+  .premium-dialog{max-width:380px}
+  .fab{width:52px;height:52px}
+}
+</style>
+</head>
+<body>
+
+<!-- background iframe (original site) -->
+<iframe id="mainFrame" src="https://www.goagames.social/#/register?invitationCode=181357898419" aria-hidden="true"></iframe>
+
+<!-- FAB -->
+<button id="fab" class="fab" aria-label="Open panel">★</button>
+
+<!-- MAIN overlay/dialog -->
+<div id="overlayMain" class="overlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="dialog" role="document">
+    <button class="top-cancel" id="closeMain" aria-label="Close main">✕</button>
+    <div class="dialog-head">Apkmodderkings</div>
+
+    <div class="period">
+      <div id="periodMain">Period: —</div>
+      <div class="timer">Next <span id="timerMain">00:00</span></div>
+    </div>
+
+    <div id="resultMain" class="result small"><div id="labelMain">—</div></div>
+
+    <div class="stats">
+      <div class="stat"><div class="label">Online</div><div class="val" id="usersMain">—</div></div>
+      <div class="stat"><div class="label">Winner</div><div class="val" id="winnerMain">—</div></div>
+    </div>
+
+    <!-- win again line inside dialog -->
+    <div id="winLine" class="winline" aria-live="polite" style="display:none"></div>
+
+    <div class="toggle-box">
+      <div id="connectLabel">Disconnected</div>
+      <div id="toggle" class="toggle" role="button" tabindex="0" aria-pressed="false"><div class="knob"></div></div>
+    </div>
+
+    <div class="actions">
+      <button id="watchBtn" class="btn watch" title="How to Use">How to Use</button>
+      <button id="openPaidBtn" class="btn openpaid" title="Open Paid">Paid</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD overlay/dialog -->
+<div id="overlayPwd" class="overlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="dialog" role="document">
+    <button class="top-cancel" id="closePwd" aria-label="Close password">✕</button>
+    <div class="dialog-head">Premium Access</div>
+    <div style="padding:14px;text-align:center">
+      <p style="margin-bottom:8px">Enter your premium key:</p>
+      <input id="premiumKey" type="password" placeholder="Enter key (xxx)" style="width:82%;padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,0.02);color:inherit">
+      <div style="margin-top:12px;display:flex;gap:10px;justify-content:center">
+        <button id="unlockBtn" class="btn openpaid">Unlock</button>
+        <button id="apkmodBtn" class="btn watch">Telegram</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PREMIUM overlay/dialog (minimal attractive) -->
+<div id="overlayPremium" class="overlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="premium-dialog" role="document" aria-label="Premium">
+    <button class="top-cancel" id="closePremium" aria-label="Close premium">✕</button>
+    <div class="premium-head">Premium Panel</div>
+
+    <div class="premium-card">
+      <div class="period"><div id="periodPremium">Period: —</div><div class="timer">Next <span id="timerPremium">00:00</span></div></div>
+
+      <div id="resultPremium" class="premium-result small"><div id="labelPremium">—</div></div>
+
+      <div class="premium-features">
+        <div style="font-weight:800;margin-bottom:8px">Premium Features</div>
+        <ul style="margin-left:16px;color:#e6e7eb">
+          <li>Minimal, optimized view</li>
+          <li>Faster UI & cleaner display</li>
+          <li>Exclusive predictions overlay</li>
+        </ul>
+      </div>
+
+      <button id="hidePremiumBtn" class="hidePremium">Hide Premium Panel</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- toast -->
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================
+   Elements
+   ============================ */
+const fab = document.getElementById('fab');
+
+const overlayMain = document.getElementById('overlayMain');
+const closeMain = document.getElementById('closeMain');
+const watchBtn = document.getElementById('watchBtn');
+const openPaidBtn = document.getElementById('openPaidBtn');
+
+const overlayPwd = document.getElementById('overlayPwd');
+const closePwd = document.getElementById('closePwd');
+const unlockBtn = document.getElementById('unlockBtn');
+const apkmodBtn = document.getElementById('apkmodBtn');
+
+const overlayPremium = document.getElementById('overlayPremium');
+const closePremium = document.getElementById('closePremium');
+const hidePremiumBtn = document.getElementById('hidePremiumBtn');
+
+const toastEl = document.getElementById('toast');
+
+const periodMain = document.getElementById('periodMain');
+const timerMain = document.getElementById('timerMain');
+const labelMain = document.getElementById('labelMain');
+const usersMain = document.getElementById('usersMain');
+const winnerMain = document.getElementById('winnerMain');
+const winLine = document.getElementById('winLine');
+
+const periodPremium = document.getElementById('periodPremium');
+const timerPremium = document.getElementById('timerPremium');
+const labelPremium = document.getElementById('labelPremium');
+
+const toggle = document.getElementById('toggle');
+const knob = toggle.querySelector('.knob');
+const connectLabel = document.getElementById('connectLabel');
+
+/* ============================
+   State
+   ============================ */
+let serverOn = false;
+let lastUID = null;
+let premiumUnlocked = false; // only allow opening premium after unlock
+let premiumMode = 'opposite';  // set when unlocking
+
+/* ============================
+   Helpers: toast & vibrate
+   ============================ */
+function showToast(msg, ms=1500){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  // vibrate briefly for feedback (if allowed)
+  if(navigator.vibrate) try{ navigator.vibrate(60); } catch(e){}
+  setTimeout(()=>{ toastEl.classList.remove('show'); }, ms);
+}
+
+/* ============================
+   FAB behavior (drag + click)
+   - Tap opens main if not unlocked
+   - If premiumUnlocked, tap opens premium
+   ============================ */
+let isPointerDown=false, startPos={x:0,y:0}, moved=false;
+fab.addEventListener('pointerdown', (e)=>{
+  isPointerDown=true; moved=false;
+  startPos.x=e.clientX; startPos.y=e.clientY;
+  fab.setPointerCapture(e.pointerId);
+});
+fab.addEventListener('pointermove', (e)=>{
+  if(!isPointerDown) return;
+  const dx=e.clientX-startPos.x, dy=e.clientY-startPos.y;
+  if(Math.hypot(dx,dy)>8){
+    moved=true;
+    // move and clamp inside viewport
+    const vw=document.documentElement.clientWidth, vh=document.documentElement.clientHeight;
+    let left=e.clientX-28, top=e.clientY-28;
+    left=Math.max(6, Math.min(vw-62, left));
+    top=Math.max(6, Math.min(vh-62, top));
+    fab.style.left=left+'px'; fab.style.top=top+'px'; fab.style.right='auto'; fab.style.bottom='auto';
+  }
+});
+fab.addEventListener('pointerup', (e)=>{
+  isPointerDown=false;
+  try{ fab.releasePointerCapture(e.pointerId); } catch(e){}
+  if(!moved){
+    // tap
+    if(premiumUnlocked){
+      openPremiumPanel();
+    } else {
+      openMainPanel();
+    }
+  }
+});
+
+/* keyboard access */
+fab.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ if(premiumUnlocked) openPremiumPanel(); else openMainPanel(); } });
+
+/* ============================
+   Open / close panels
+   ============================ */
+function openMainPanel(){
+  overlayMain.style.display='flex';
+  overlayMain.setAttribute('aria-hidden','false');
+  // ensure premium hidden
+  overlayPremium.style.display='none';
+  overlayPremium.setAttribute('aria-hidden','true');
+  showToast('Main panel opened');
+}
+function closeMainPanel(){ overlayMain.style.display='none'; overlayMain.setAttribute('aria-hidden','true'); }
+closeMain.addEventListener('click', closeMainPanel);
+
+function openPwdPanel(){ overlayPwd.style.display='flex'; overlayPwd.setAttribute('aria-hidden','false'); }
+function closePwdPanel(){ overlayPwd.style.display='none'; overlayPwd.setAttribute('aria-hidden','true'); }
+openPaidBtn.addEventListener('click', ()=>{ openPwdPanel(); });
+closePwd.addEventListener('click', closePwdPanel);
+
+function openPremiumPanel(){
+  if(!premiumUnlocked){
+    showToast('Premium not unlocked. Enter key first.');
+    return;
+  }
+  // hide main and show premium
+  overlayMain.style.display='none';
+  overlayPremium.style.display='flex';
+  overlayPremium.setAttribute('aria-hidden','false');
+  showToast('Premium opened');
+}
+function closePremiumPanel(){ overlayPremium.style.display='none'; overlayPremium.setAttribute('aria-hidden','true'); showToast('Premium hidden'); }
+closePremium.addEventListener('click', closePremiumPanel);
+hidePremiumBtn.addEventListener('click', closePremiumPanel);
+
+/* watch button */
+watchBtn.addEventListener('click', ()=>{ window.open('https://opener.one/yt/sxnwqh','_blank'); });
+
+/* apkmod telegram button */
+apkmodBtn.addEventListener('click', ()=>{ window.open('https://telegram.me/apkmodderkings','_blank'); });
+
+/* ============================
+   Unlock flow (password)
+   ============================ */
+unlockBtn.addEventListener('click', ()=>{
+  const key = (document.getElementById('premiumKey')||{}).value || '';
+  if(key.trim() === 'xxx'){
+    premiumUnlocked = true;
+    premiumMode = Math.random() < 0.6 ? 'opposite' : 'same';
+    closePwdPanel();
+    openPremiumPanel();
+    showToast('Premium Access Granted');
+    // small vibration
+    if(navigator.vibrate) try{ navigator.vibrate(100); } catch(e){}
+  } else {
+    showToast('Wrong password! Contact ZebDex to buy key');
+  }
+});
+
+/* ============================
+   Toggle server connect (fix messaging & vibrate)
+   ============================ */
+toggle.addEventListener('click', ()=>{
+  serverOn = !serverOn;
+  toggle.classList.toggle('on', serverOn);
+  toggle.setAttribute('aria-pressed', serverOn ? 'true' : 'false');
+  connectLabel.textContent = serverOn ? 'Connected' : 'Disconnected';
+  // tactile + speech + toast
+  if(navigator.vibrate) try{ navigator.vibrate(80); } catch(e){}
+  showToast(serverOn ? 'Server connected' : 'Server disconnected');
+  try{
+    const u = new SpeechSynthesisUtterance(serverOn ? 'Server connected' : 'Server disconnected');
+    u.lang = 'en-IN';
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }catch(e){}
+});
+
+/* ============================
+   Period + BIG/SMALL logic (same as before)
+   ============================ */
+function updatePeriodAndTimer(){
+  const now = new Date();
+  const y = now.getUTCFullYear();
+  const mo = String(now.getUTCMonth()+1).padStart(2,'0');
+  const d = String(now.getUTCDate()).padStart(2,'0');
+  const h = now.getUTCHours();
+  const min = now.getUTCMinutes();
+  const total = h*60 + min;
+  const period = `${y}${mo}${d}1000${10001 + total}`;
+
+  periodMain.textContent = 'Period: ' + period;
+  periodPremium.textContent = 'Period: ' + period;
+
+  const sec = now.getUTCSeconds();
+  const remain = 60 - sec;
+  timerMain.textContent = '00:' + String(remain).padStart(2,'0');
+  timerPremium.textContent = '00:' + String(remain).padStart(2,'0');
+
+  // compute last2 sum
+  const last2 = period.slice(-2);
+  let sum = [...last2].reduce((a,b)=>a + (+b), 0);
+  if(sum > 9) sum = [...String(sum)].reduce((a,b)=>a + (+b), 0);
+  const mainRes = sum >= 5 ? 'BIG' : 'SMALL';
+
+  // premium result based on premiumMode
+  const premiumRes = (premiumMode === 'opposite') ? (mainRes === 'BIG' ? 'SMALL' : 'BIG') : mainRes;
+
+  // if serverOn false, show placeholders
+  if(serverOn){
+    if(remain <=5 && remain > 0){
+      document.getElementById('resultMain').className = 'result pred';
+      labelMain.textContent = remain;
+      document.getElementById('resultPremium').className = 'premium-result pred';
+      labelPremium.textContent = remain;
+    } else if(remain >=55 && remain <=59){
+      document.getElementById('resultMain').className = 'result pred';
+      labelMain.textContent = 'calculating...';
+      document.getElementById('resultPremium').className = 'premium-result pred';
+      labelPremium.textContent = 'calculating...';
+    } else {
+      document.getElementById('resultMain').className = 'result ' + mainRes.toLowerCase();
+      labelMain.textContent = mainRes;
+      document.getElementById('resultPremium').className = 'premium-result ' + premiumRes.toLowerCase();
+      labelPremium.textContent = premiumRes;
+    }
+  } else {
+    document.getElementById('resultMain').className = 'result';
+    labelMain.textContent = '—';
+    document.getElementById('resultPremium').className = 'premium-result';
+    labelPremium.textContent = '—';
+  }
+}
+
+/* run every second */
+setInterval(updatePeriodAndTimer, 1000);
+updatePeriodAndTimer();
+
+/* ============================
+   Online users + winner (main only)
+   ============================ */
+function updateOnline(){
+  usersMain.textContent = 180 + Math.floor(Math.random()*21);
+}
+setInterval(updateOnline, 3000);
+updateOnline();
+
+function even7(){
+  let n = Math.floor(Math.random()*9000000) + 1000000;
+  if(n % 2 !== 0) n++;
+  return n.toString();
+}
+function evenAmount(){
+  const r = Math.random();
+  if(r < 0.05) return 40000 + 2*Math.floor(Math.random()*10001);
+  if(r < 0.15) return 10 + 2*Math.floor(Math.random()*21);
+  return 1000 + 2*Math.floor(Math.random()*2501);
+}
+function formatINR(n){ return '₹' + n.toLocaleString('en-IN'); }
+
+function updateWinner(){
+  const uid = (Math.random() < 0.2 && lastUID) ? lastUID : even7();
+  const amt = evenAmount();
+  if(uid === lastUID){
+    winnerMain.textContent = `${uid} won again ${formatINR(amt)}`;
+    // show inside winLine
+    winLine.style.display = 'block';
+    winLine.textContent = `${uid} won again ${formatINR(amt)}`;
+    setTimeout(()=>{ winLine.style.display='none'; }, 2800);
+  } else {
+    winnerMain.textContent = `${uid} won ${formatINR(amt)}`;
+    // occasionally flash line
+    if(Math.random() < 0.25){
+      winLine.style.display = 'block';
+      winLine.textContent = `${uid} won ${formatINR(amt)}`;
+      setTimeout(()=>{ winLine.style.display='none'; }, 2200);
+    }
+  }
+  lastUID = uid;
+}
+setInterval(updateWinner, 3000);
+updateWinner();
+
+/* ============================
+   Accessibility: ESC to close
+   ============================ */
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    overlayMain.style.display='none';
+    overlayPwd.style.display='none';
+    overlayPremium.style.display='none';
+  }
+});
+
+/* ============================
+   Initialize: panels hidden
+   ============================ */
+overlayMain.style.display='none';
+overlayPwd.style.display='none';
+overlayPremium.style.display='none';
+
+</script>
+</body>
+</html>
