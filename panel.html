@@ -316,7 +316,7 @@ apkmodBtn.addEventListener('click', ()=>{ window.open('https://telegram.me/apkmo
    ============================ */
 unlockBtn.addEventListener('click', ()=>{
   const key = (document.getElementById('premiumKey')||{}).value || '';
-  if(key.trim() === 'xxx'){
+  if(key.trim() === 'xx12x'){
     premiumUnlocked = true;
     premiumMode = Math.random() < 0.6 ? 'opposite' : 'same';
     closePwdPanel();
@@ -325,7 +325,7 @@ unlockBtn.addEventListener('click', ()=>{
     // small vibration
     if(navigator.vibrate) try{ navigator.vibrate(100); } catch(e){}
   } else {
-    showToast('Wrong password! Contact ZebDex to buy key');
+    showToast('Wrong password! buy key from telegram ( @Zebdex)');
   }
 });
 
